@@ -25,7 +25,7 @@ public interface CouchDBConstants
 {
 
     /** The Constant PROTOCOL. */
-    public static final String PROTOCOL = "http";
+    public static final String PROTOCOL = "https";
 
     /** The Constant URL_SEPARATOR. */
     public static final String URL_SEPARATOR = "/";

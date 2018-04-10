@@ -103,7 +103,7 @@ public class CouchDBOperationUtils
             ssf = PlainSocketFactory.getSocketFactory();
             SchemeRegistry schemeRegistry = new SchemeRegistry();
 
-            schemeRegistry.register(new Scheme("http", port, ssf));
+            schemeRegistry.register(new Scheme("https", port, ssf));
             PoolingClientConnectionManager ccm = new PoolingClientConnectionManager(schemeRegistry);
             
             ccm.setMaxTotal(100);

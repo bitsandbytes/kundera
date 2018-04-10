@@ -15,17 +15,16 @@
  ******************************************************************************/
 package com.impetus.client.couchdb;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.impetus.client.couchdb.CouchDBDesignDocument.MapReduce;
+import com.impetus.kundera.KunderaException;
+import com.impetus.kundera.configure.schema.IndexInfo;
+import com.impetus.kundera.configure.schema.SchemaGenerationException;
+import com.impetus.kundera.configure.schema.TableInfo;
+import com.impetus.kundera.configure.schema.api.AbstractSchemaManager;
+import com.impetus.kundera.configure.schema.api.SchemaManager;
+import com.impetus.kundera.persistence.EntityManagerFactoryImpl.KunderaMetadata;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
@@ -40,10 +39,10 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.scheme.SchemeSocketFactory;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -53,16 +52,18 @@ import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.impetus.client.couchdb.CouchDBDesignDocument.MapReduce;
-import com.impetus.kundera.KunderaException;
-import com.impetus.kundera.configure.schema.IndexInfo;
-import com.impetus.kundera.configure.schema.SchemaGenerationException;
-import com.impetus.kundera.configure.schema.TableInfo;
-import com.impetus.kundera.configure.schema.api.AbstractSchemaManager;
-import com.impetus.kundera.configure.schema.api.SchemaManager;
-import com.impetus.kundera.persistence.EntityManagerFactoryImpl.KunderaMetadata;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.KeyStore;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Schema Manager for couchdb.
@@ -181,13 +182,30 @@ public class CouchDBSchemaManager extends AbstractSchemaManager implements Schem
     {
         try
         {
-            SchemeSocketFactory ssf = null;
-            ssf = PlainSocketFactory.getSocketFactory();
+            String trustStoreFile = System.getProperty("mobdata.trustStore");
+            String trustStorePassword = System.getProperty("mobdata.trustStorePassword");
+            String keyStoreFile = System.getProperty("mobdata.keyStore");
+            String keyStorePassword = System.getProperty("mobdata.keyStorePassword");
+            KeyStore clientKeyStore = KeyStore.getInstance("JKS");
+            clientKeyStore.load(new FileInputStream(keyStoreFile),
+                    keyStorePassword.toCharArray());
+            KeyStore trustKeyStore = KeyStore.getInstance("JKS");
+            trustKeyStore.load(new FileInputStream(trustStoreFile),
+                    trustStorePassword.toCharArray());
+            SSLSocketFactory socketFactory = new SSLSocketFactory(
+                    SSLSocketFactory.TLS,
+                    clientKeyStore,
+                    keyStorePassword,
+                    trustKeyStore,
+                    null,
+                    null,
+                    (X509HostnameVerifier) SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+
             SchemeRegistry schemeRegistry = new SchemeRegistry();
-            schemeRegistry.register(new Scheme("http", Integer.parseInt(port), ssf));
+            schemeRegistry.register(new Scheme(CouchDBConstants.PROTOCOL, Integer.parseInt(port), socketFactory));
             PoolingClientConnectionManager ccm = new PoolingClientConnectionManager(schemeRegistry);
             httpClient = new DefaultHttpClient(ccm);
-            httpHost = new HttpHost(hosts[0], Integer.parseInt(port), "http");
+            httpHost = new HttpHost(hosts[0], Integer.parseInt(port), CouchDBConstants.PROTOCOL);
             // Http params
             httpClient.getParams().setParameter(CoreProtocolPNames.HTTP_CONTENT_CHARSET, "UTF-8");
 
@@ -717,7 +735,6 @@ public class CouchDBSchemaManager extends AbstractSchemaManager implements Schem
     {
         URI uri = new URI(CouchDBConstants.PROTOCOL, null, httpHost.getHostName(), httpHost.getPort(),
                 CouchDBConstants.URL_SEPARATOR + databaseName.toLowerCase(), null, null);
-
         HttpGet get = new HttpGet(uri);
         HttpResponse getRes = null;
         try

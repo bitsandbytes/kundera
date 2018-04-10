@@ -84,23 +84,23 @@
 			</activation>
 			<modules>
 				<module>jpa-engine</module>
-				<module>kundera-elastic-search</module>
-				<module>kundera-cassandra</module>
-				<module>kundera-spark</module>
-				<module>kundera-kudu</module>
-				<module>kundera-rethinkdb</module>
+				<!--<module>kundera-elastic-search</module>-->
+				<!--<module>kundera-cassandra</module>-->
+				<!--<module>kundera-spark</module>-->
+				<!--<module>kundera-kudu</module>-->
+				<!--<module>kundera-rethinkdb</module>-->
 				<module>data-as-object</module>
-				<module>kundera-hbase</module>
-				<module>kundera-mongo</module>
-				<module>kundera-rdbms</module>
-				<module>kundera-neo4j</module>
-				<module>kundera-rest</module>
-				<module>kundera-redis</module>
-				<module>kundera-oracle-nosql</module>
+				<!--<module>kundera-hbase</module>-->
+				<!--<module>kundera-mongo</module>-->
+				<!--<module>kundera-rdbms</module>-->
+				<!--<module>kundera-neo4j</module>-->
+				<!--<module>kundera-rest</module>-->
+				<!--<module>kundera-redis</module>-->
+				<!--<module>kundera-oracle-nosql</module>-->
 				<module>kundera-couchdb</module>
-				<module>kundera-couchbase</module>
-				<module>kundera-ethereum</module>
-				<module>kundera-tests</module>
+				<!--<module>kundera-couchbase</module>-->
+				<!--<module>kundera-ethereum</module>-->
+				<!--<module>kundera-tests</module>-->
 			</modules>
 		</profile>
 		<profile>

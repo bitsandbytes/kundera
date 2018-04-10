@@ -15,7 +15,8 @@
 
 	<properties>
 		<lucene.version>5.5.0</lucene.version>
-	</properties>
+			<maven.test.skip>true</maven.test.skip>
+</properties>
 
 	<dependencies>
 		<dependency>

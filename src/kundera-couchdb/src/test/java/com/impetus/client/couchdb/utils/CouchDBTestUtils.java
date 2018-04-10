@@ -80,7 +80,7 @@ public class CouchDBTestUtils
         String userName = pumMetadata.getProperty(PersistenceProperties.KUNDERA_USERNAME);
         String password = pumMetadata.getProperty(PersistenceProperties.KUNDERA_PASSWORD);
 
-        schemeRegistry.register(new Scheme("http", port, ssf));
+        schemeRegistry.register(new Scheme("https", port, ssf));
         PoolingClientConnectionManager ccm = new PoolingClientConnectionManager(schemeRegistry);
         HttpClient httpClient = new DefaultHttpClient(ccm);
 

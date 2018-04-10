@@ -15,11 +15,12 @@
  ******************************************************************************/
 package com.impetus.client.couchdb;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.Map;
-import java.util.Properties;
-
+import com.impetus.kundera.PersistenceProperties;
+import com.impetus.kundera.client.Client;
+import com.impetus.kundera.configure.schema.api.SchemaManager;
+import com.impetus.kundera.index.IndexManager;
+import com.impetus.kundera.loader.GenericClientFactory;
+import com.impetus.kundera.metadata.model.PersistenceUnitMetadata;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -30,10 +31,10 @@ import org.apache.http.RequestLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
-import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.scheme.SchemeSocketFactory;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
@@ -42,12 +43,12 @@ import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.impetus.kundera.PersistenceProperties;
-import com.impetus.kundera.client.Client;
-import com.impetus.kundera.configure.schema.api.SchemaManager;
-import com.impetus.kundera.index.IndexManager;
-import com.impetus.kundera.loader.GenericClientFactory;
-import com.impetus.kundera.metadata.model.PersistenceUnitMetadata;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.security.KeyStore;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * CouchDB client factory.
@@ -96,10 +97,11 @@ public class CouchDBClientFactory extends GenericClientFactory
         {
             indexManager.close();
         }
-        if (schemaManager != null)
-        {
-            schemaManager.dropSchema();
-        }
+        /** Not sure why this is dropped, and I need to see it, so it's staying **/
+//        if (schemaManager != null)
+//        {
+//            schemaManager.dropSchema();
+//        }
         schemaManager = null;
         externalProperties = null;
         httpClient.getConnectionManager().shutdown();
@@ -175,10 +177,27 @@ public class CouchDBClientFactory extends GenericClientFactory
         onValidation(contactNode, defaultPort);
         try
         {
-            SchemeSocketFactory ssf = null;
-            ssf = PlainSocketFactory.getSocketFactory();
+            String trustStoreFile = System.getProperty("mobdata.trustStore");
+            String trustStorePassword = System.getProperty("mobdata.trustStorePassword");
+            String keyStoreFile = System.getProperty("mobdata.keyStore");
+            String keyStorePassword = System.getProperty("mobdata.keyStorePassword");
+            KeyStore clientKeyStore = KeyStore.getInstance("JKS");
+            clientKeyStore.load(new FileInputStream(keyStoreFile),
+                    keyStorePassword.toCharArray());
+            KeyStore trustKeyStore = KeyStore.getInstance("JKS");
+            trustKeyStore.load(new FileInputStream(trustStoreFile),
+                    trustStorePassword.toCharArray());
+            SSLSocketFactory socketFactory = new SSLSocketFactory(
+                    SSLSocketFactory.TLS,
+                    clientKeyStore,
+                    keyStorePassword,
+                    trustKeyStore,
+                    null,
+                    null,
+                    (X509HostnameVerifier) SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+
             SchemeRegistry schemeRegistry = new SchemeRegistry();
-            schemeRegistry.register(new Scheme(CouchDBConstants.PROTOCOL, Integer.parseInt(defaultPort), ssf));
+            schemeRegistry.register(new Scheme(CouchDBConstants.PROTOCOL, Integer.parseInt(defaultPort), socketFactory));
             PoolingClientConnectionManager ccm = new PoolingClientConnectionManager(schemeRegistry);
             httpClient = new DefaultHttpClient(ccm);
             httpHost = new HttpHost(contactNode, Integer.parseInt(defaultPort), CouchDBConstants.PROTOCOL);

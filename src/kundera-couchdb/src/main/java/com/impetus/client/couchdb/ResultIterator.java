@@ -125,7 +125,7 @@ class ResultIterator<E> implements IResultIterator<E>
         }
         catch (Exception e)
         {
-
+            logger.warn("Someone didn't think this was important", e);
         }
     }
 
