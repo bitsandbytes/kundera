@@ -844,27 +844,33 @@ public class CouchDBClient extends ClientBase implements Client<CouchDBQuery>, B
         List results = new ArrayList();
         try
         {
+            log.info("1");
             MetamodelImpl metaModel = (MetamodelImpl) kunderaMetadata.getApplicationMetadata().getMetamodel(
                     m.getPersistenceUnit());
             StringBuilder q = new StringBuilder();
+            log.info("2");
             String _id = CouchDBConstants.URL_SEPARATOR + m.getSchema().toLowerCase() + CouchDBConstants.URL_SEPARATOR
                     + CouchDBConstants.DESIGN + m.getTableName() + CouchDBConstants.VIEW;
             if ((interpreter.isIdQuery() && !interpreter.isRangeQuery() && interpreter.getOperator() == null)
                     || interpreter.isQueryOnCompositeKey())
             {
+                log.info("3");
                 Object object = null;
                 if (metaModel.isEmbeddable(m.getIdAttribute().getBindableJavaType()))
                 {
+                    log.info("4");
                     EmbeddableType embeddableType = metaModel.embeddable(m.getIdAttribute().getBindableJavaType());
                     if (KunderaCoreUtils.countNonSyntheticFields(m.getIdAttribute().getBindableJavaType()) == interpreter
                             .getKeyValues().size())
                     {
+                        log.info("5");
                         Object key = CouchDBObjectMapper.getObjectFromJson(gson.toJsonTree(interpreter.getKeyValues())
                                 .getAsJsonObject(), m.getIdAttribute().getBindableJavaType(), embeddableType
                                 .getAttributes());
                         object = find(m.getEntityClazz(), key);
                         if (object != null)
                         {
+                            log.info("6");
                             results.add(object);
                         }
                         return results;
@@ -872,9 +878,11 @@ public class CouchDBClient extends ClientBase implements Client<CouchDBQuery>, B
                     else if (m.getIdAttribute().getName().equals(interpreter.getKeyName())
                             && interpreter.getKeyValues().size() == 1)
                     {
+                        log.info("7");
                         object = find(m.getEntityClazz(), interpreter.getKeyValue());
                         if (object != null)
                         {
+                            log.info("8");
                             results.add(object);
                         }
                         return results;
@@ -885,9 +893,11 @@ public class CouchDBClient extends ClientBase implements Client<CouchDBQuery>, B
                         throw new QueryHandlerException("There should be each and every field of composite key.");
                     }
                 }
+                log.info("9");
                 object = find(m.getEntityClazz(), interpreter.getKeyValue());
                 if (object != null)
                 {
+                    log.info("10");
                     results.add(object);
                 }
                 return results;
@@ -907,6 +917,7 @@ public class CouchDBClient extends ClientBase implements Client<CouchDBQuery>, B
 
             // execute query.
             executeQueryAndGetResults(q, _id, m, results, interpreter);
+            log.info("RESULTS (l.920): " + results.toString());
         }
         catch (Exception e)
         {
@@ -940,20 +951,25 @@ public class CouchDBClient extends ClientBase implements Client<CouchDBQuery>, B
             CouchDBQueryInterpreter interpreter) throws IOException, URISyntaxException, ClientProtocolException
     {
         HttpResponse response = null;
+        log.info("Are we here??");
         try
         {
             response = getResponse(q, _id);
             JsonArray array = getJsonFromResponse(response);
+            log.info(">>>> " + array.toString());
             if (interpreter != null && interpreter.isAggregation())
             {
+                log.info(">>>> >>>> 1");
                 setAggregatedValuesInResult(results, interpreter, array);
             }
             else if (interpreter != null && interpreter.getColumns() != null && interpreter.getColumns().length != 0)
             {
+                log.info(">>>> >>>> 2");
                 setSpecificFieldsInResult(interpreter.getColumnsToOutput(), m, results, array);
             }
             else
             {
+                log.info(">>>> >>>> 3");
                 setEntitiesInResult(m, results, array);
             }
         }
@@ -1049,6 +1065,14 @@ public class CouchDBClient extends ClientBase implements Client<CouchDBQuery>, B
 
             String id = element.getAsJsonObject().get("value").getAsJsonObject()
                     .get(((AbstractAttribute) m.getIdAttribute()).getJPAColumnName()).getAsString();
+            log.info("ID: " + id);
+            log.info("m.getEntityClazz: " + m.getEntityClazz().getCanonicalName());
+            if (m.getRelationNames() != null) {
+                log.info("m.getRelationNames not null, size: " + m.getRelationNames().size());
+            } else {
+                log.info("m.getRelationNames: NULL");
+            }
+            log.info("element.getAsJsonObject: " + element.getAsJsonObject().get("value").getAsJsonObject().toString());
             Object entityFromJson = CouchDBObjectMapper.getEntityFromJson(m.getEntityClazz(), m, element
                     .getAsJsonObject().get("value").getAsJsonObject(), m.getRelationNames(), kunderaMetadata);
             if (entityFromJson != null

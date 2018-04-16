@@ -106,10 +106,12 @@ public class CouchDBQuery extends QueryImpl
         this.useLuceneOrES = !MetadataUtils.useSecondryIndex(clientMetadata);
         if (useLuceneOrES)
         {
+            log.info("Not sure if we're using Lucene or ES");
             return populateUsingLucene(m, client, null, kunderaQuery.getResult());
         }
         else
         {
+            log.info("Not using Lucene or ES");
             CouchDBQueryInterpreter interpreter = onTranslation(getKunderaQuery().getFilterClauseQueue(), m);
             return ((CouchDBClient) client).createAndExecuteQuery(interpreter);
         }

@@ -22,12 +22,7 @@ import com.impetus.kundera.index.IndexManager;
 import com.impetus.kundera.loader.GenericClientFactory;
 import com.impetus.kundera.metadata.model.PersistenceUnitMetadata;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpResponseInterceptor;
-import org.apache.http.RequestLine;
+import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
@@ -236,8 +231,10 @@ public class CouchDBClientFactory extends GenericClientFactory
             {
                 public void process(final HttpResponse response, final HttpContext context) throws IOException
                 {
-                    if (logger.isInfoEnabled())
+                    if (logger.isInfoEnabled()) {
                         logger.info("<< Status: " + response.getStatusLine().getStatusCode());
+                    }
+
                 }
             });
         }

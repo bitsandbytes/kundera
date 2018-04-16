@@ -176,27 +176,34 @@ public abstract class QueryImpl<E> implements Query, com.impetus.kundera.query.Q
 
         if (getEntityMetadata() == null)
         {
+            log.info("Metadata is null");
             // Scalar Query
             if (kunderaQuery.isDeleteUpdate())
             {
+                log.info("Executing delete update??");
                 executeUpdate();
             }
             else
             {
+                log.info("Executing populateEntities()");
                 Client client = persistenceDelegeator.getClient(kunderaQuery.getPersistenceUnit());
                 results = populateEntities(null, client);
+                log.info("results: " + results.toString());
             }
         }
         else
         {
+            log.info("Meta data is not null");
             handlePostEvent();
 
             if (kunderaQuery.isDeleteUpdate())
             {
+                log.info("is delete update??");
                 executeUpdate();
             }
             else
             {
+                log.info("Fetching results");
                 results = fetch();
                 assignReferenceToProxy(results);
             }
@@ -1374,8 +1381,14 @@ public abstract class QueryImpl<E> implements Query, com.impetus.kundera.query.Q
     {
         EntityMetadata metadata = getEntityMetadata();
         Client client = persistenceDelegeator.getClient(metadata);
-        List results = isRelational(metadata) ? recursivelyPopulateEntities(metadata, client) : populateEntities(
-                metadata, client);
+        List results = null;
+        if (isRelational(metadata)) {
+            log.info("Oops! it's relational?");
+            results = recursivelyPopulateEntities(metadata, client);
+        } else {
+            log.info("Non-relational, as it should be");
+            results = populateEntities(metadata, client);
+        }
         return results;
     }
 
